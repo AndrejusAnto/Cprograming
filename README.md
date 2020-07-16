@@ -1,1 +1,1 @@
-Visokie C programavimo kalbos (užduočių )sprendimai
+Visokie C programavimo kalbos (užduočių) sprendimai
