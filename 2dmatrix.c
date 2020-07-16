@@ -1,6 +1,8 @@
 #include <stdio.h>
 #include <stdlib.h>
 
+// Sukuriama 2d (suprasti rows ir columns) matrica
+
 int** fill_arr(int **m, int r, int c){
     for (int i = 0; i < r; i++){
         for (int j = 0; j < c; j++){
