@@ -13,4 +13,4 @@ namedmatrix2d.c
 
 funwithsdl.c
 
-![Alt Text] (https://github.com/AndrejusAnto/Cprograming/blob/master/sdldemo.gif)
+![Alt Text](https://github.com/AndrejusAnto/Cprograming/blob/master/sdldemo.gif)
