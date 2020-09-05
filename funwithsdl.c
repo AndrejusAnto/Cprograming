@@ -32,6 +32,16 @@ SDL_Texture* gTexture = NULL;
 // The images that correspond to a keypress
 SDL_Texture* gKeyPressSurfaces[ KEY_PRESS_SURFACE_TOTAL ];
 
+
+struct ImagesList {
+	char imgdef[20];
+	char imgup[20];
+	char imgdown[20];
+	char imgleft[20];
+	char imgright[20];
+
+};
+
 bool init()
 {
 	//Initialization flag
@@ -113,42 +123,95 @@ SDL_Texture* loadTexture( char *impath, SDL_Renderer *ren)
 	return newTexture;
 }
 
+struct ImagesList imagelist()
+{
+	const char ch = '.';
+	char *ret;
+	struct dirent *de;  // Pointer for directory entry 
+	// opendir() returns a pointer of DIR type.
+	struct ImagesList Images;
+	DIR *dr = opendir("."); 
+	if (dr == NULL)  // opendir returns NULL if couldn't open directory 
+	{
+		printf("Could not open current directory" );
+	}
+	// Refer http://pubs.opengroup.org/onlinepubs/7990989775/xsh/readdir.html 
+	// for readdir() 
+	while ((de = readdir(dr)) != NULL)
+	{
+		ret = strrchr(de->d_name, ch);
+		if (ret != NULL)
+		{
+			if (!strcmp(ret, ".bmp"))
+			{
+				if (!strcmp(de->d_name, "press.bmp"))
+				{
+					strcpy(Images.imgdef, de->d_name);
+
+				}
+				else if (!strcmp(de->d_name, "up.bmp"))
+				{
+					strcpy(Images.imgup, de->d_name);;
+
+				}
+				else if (!strcmp(de->d_name, "down.bmp"))
+				{
+					strcpy(Images.imgdown, de->d_name);
+
+				}
+				else if (!strcmp(de->d_name, "left.bmp"))
+				{
+					strcpy(Images.imgleft, de->d_name);
+
+				}
+				else if (!strcmp(de->d_name, "right.bmp"))
+				{
+					strcpy(Images.imgright, de->d_name);
+
+				}
+			}
+		}
+	}
+	closedir(dr);
+	return Images;
+}
+
 bool loadMedia()
 {
 	//Loading success flag
 	bool success = true;
-	int i;
 
+	struct ImagesList Images = imagelist();
 	// struct ImagesList Images = {"press.bmp", "up.bmp", "down.bmp", "left.bmp", "right.bmp"};
-	gKeyPressSurfaces[ KEY_PRESS_SURFACE_DEFAULT] = loadTexture("press.bmp", gRenderer);
+	gKeyPressSurfaces[ KEY_PRESS_SURFACE_DEFAULT] = loadTexture(Images.imgdef, gRenderer);
 	if( gKeyPressSurfaces[ KEY_PRESS_SURFACE_DEFAULT] == NULL )
 	{
 		printf( "Unable to load image! SDL Error: %s\n", SDL_GetError() );
 		success = false;
 	}
 
-	gKeyPressSurfaces[ KEY_PRESS_SURFACE_UP] = loadTexture("up.bmp", gRenderer);
+	gKeyPressSurfaces[ KEY_PRESS_SURFACE_UP] = loadTexture(Images.imgup, gRenderer);
 	if( gKeyPressSurfaces[ KEY_PRESS_SURFACE_UP] == NULL )
 	{
 		printf( "Unable to load image! SDL Error: %s\n", SDL_GetError() );
 		success = false;
 	}
 
-	gKeyPressSurfaces[ KEY_PRESS_SURFACE_DOWN] = loadTexture("down.bmp", gRenderer);
+	gKeyPressSurfaces[ KEY_PRESS_SURFACE_DOWN] = loadTexture(Images.imgdown, gRenderer);
 	if( gKeyPressSurfaces[ KEY_PRESS_SURFACE_DOWN] == NULL )
 	{
 		printf( "Unable to load image! SDL Error: %s\n", SDL_GetError() );
 		success = false;
 	}
 
-	gKeyPressSurfaces[ KEY_PRESS_SURFACE_LEFT] = loadTexture("left.bmp", gRenderer);
+	gKeyPressSurfaces[ KEY_PRESS_SURFACE_LEFT] = loadTexture(Images.imgleft, gRenderer);
 	if( gKeyPressSurfaces[ KEY_PRESS_SURFACE_LEFT] == NULL )
 	{
 		printf( "Unable to load image! SDL Error: %s\n", SDL_GetError() );
 		success = false;
 	}
 
-	gKeyPressSurfaces[ KEY_PRESS_SURFACE_RIGHT] = loadTexture("right.bmp", gRenderer);
+	gKeyPressSurfaces[ KEY_PRESS_SURFACE_RIGHT] = loadTexture(Images.imgright, gRenderer);
 	if( gKeyPressSurfaces[ KEY_PRESS_SURFACE_RIGHT] == NULL )
 	{
 		printf( "Unable to load image! SDL Error: %s\n", SDL_GetError() );
