@@ -1,4 +1,4 @@
-Visokie C programavimo kalbos (užduočių) sprendimai
+Visokie C programavimo kalbos (užduočių) sprendimai:
 
 pagal sdlrect.c padaryta tas pats naudojant sdl point api (sdlpoint.c)   
 
