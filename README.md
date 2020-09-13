@@ -1,6 +1,6 @@
 Visokie C programavimo kalbos (užduočių) sprendimai
 
-pagal sdlrect.c padaryta (sdlpoint.c) tas pats naudojant sdl point api   
+pagal sdlrect.c padaryta tas pats naudojant sdl point api (sdlpoint.c)   
 
 ![Alt Text](https://github.com/AndrejusAnto/Cprograming/blob/master/sdlrectpoint.gif)
 
