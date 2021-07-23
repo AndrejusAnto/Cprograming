@@ -139,12 +139,14 @@ int main (int argc, char *argv[])
 		}
 	}
 	
+	int notfound = 0;
 	
 	for (int i = 0; words[i] != NULL; i++)
 	{
 		// padaryti su malloc
 		char *allletters[100];
 		int lnb = 0;
+		
 		
 		findfirstletter(words[i], word, allletters, &lnb);
 		
@@ -154,8 +156,14 @@ int main (int argc, char *argv[])
 			if(iffound == 0)
 			{
 				printf("Found word \"%s\" in %s\n", word, words[i]);
+				notfound++;
 			}
 		}		
+	}
+	
+	if(!notfound)
+	{
+		printf("Not found word \"%s\" \n", word);
 	}
 	
 	printf("Baigta");
@@ -189,17 +197,24 @@ char ** loadfile(char *filename)
 			lines = newlines;
 		}
 		
-		for(int j = 0; buf[j] != '\0'; j++)
+		char *tempstr;
+		
+		for(int j = 0; buf[j] == ' '; j++)
 		{
-			if(buf[j] == '\n')
+			tempstr = buf + (j+1);
+			}
+				
+		for(int k = 0; tempstr[k] != '\0'; k++)
+		{
+			if(tempstr[k] == '\n')
 			{
-				buf[j] = '\0';
+				tempstr[k] = '\0';
 			}
 		}
 		
-		int slen = strlen(buf);
+		int slen = strlen(tempstr);
 		char *str = (char *)malloc((slen + 1) * sizeof(char));
-		strcpy(str, buf);
+		strcpy(str, tempstr);
 		lines[i] = str;
 
 		i++;
