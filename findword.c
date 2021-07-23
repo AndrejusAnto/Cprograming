@@ -198,12 +198,19 @@ char ** loadfile(char *filename)
 		}
 		
 		char *tempstr;
-		
+		int ifspace = 0;
 		for(int j = 0; buf[j] == ' '; j++)
 		{
 			tempstr = buf + (j+1);
-			}
-				
+			ifspace++;
+		}
+		
+		if(ifspace == 0)
+		{
+			// buf = tempstr; negalima you can't assign arrays. You'd have to copy them with
+			tempstr = buf;
+		}
+		
 		for(int k = 0; tempstr[k] != '\0'; k++)
 		{
 			if(tempstr[k] == '\n')
