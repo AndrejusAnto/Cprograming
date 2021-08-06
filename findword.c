@@ -3,98 +3,133 @@
 #include <string.h>
 
 const int STEPSIZE = 200;
-char ** loadfile(char *filename);
+char **loadfile(char *filename);
 
-void findfirstletter(char *str, char *findword, char *arr[100], int *nb)
+int realstrlen(char *str)
 {	
-	int howmany = 0;
-
-	while (*str != '\0')
-	{
-		if(*str == *findword)
-		{
-			arr[howmany] = str;
-			howmany++;
-		}
-		str++;
-		
-	}
-	*nb = howmany;
+	int strlen = 0;
 	
-}
-
-int comparestr(char *str, char *findword, char *op)
-{
-	int wordlen = 0;
-	for (int i = 0; findword[i] != '\0'; i++)
+	while(*str != '\0')
 	{
-		wordlen++;
-		
-	}
-	
-	int sameletters = 0;
-	while (*findword != '\0')
-	{
-		if(*findword == *str)
+		if(*str == '!' || *str == '@' || *str == '#' || *str == '$' || *str == '%' || *str == '^' || *str == '&' || *str == '*'
+		|| *str == '(' || *str == ')' || *str == '-' || *str == '{' || *str == '}' || *str == '[' || *str == ']' || *str == ':'
+		|| *str == ';' || *str == '"' || *str == '\'' || *str == '<' || *str == '>' || *str == '.' || *str == '/' || *str == '?'
+		|| *str == '~' || *str == '`' || *str == ',')
+		// if(*str != ' ' || *str != '!') cia negerai, nes lyginimas vyksta 1 variablo , o ne pvz. 2, sita condition visada bus true
+		// ir else niekada nesuveiks.
 		{
-			findword++;
 			str++;
-			sameletters++;
 		}
 		else
 		{
-			break;
+			strlen++;
+			str++;			
 		}
 	}
 	
-	
-	if((wordlen ==  sameletters))
+	return strlen;
+}
+
+int compares(char *str, char *findword, char *op, int wl, int sl)
+{
+
+	int samelet = 0;
+	int strn = 0;
+	char *fw = findword;
+	char *temps = str;
+	int stl = 0;
+	int wce = 0;
+	// int wci = 0;
+
+	while(*str != '\0')
 	{
-		if(op[0] == 'i')
+		if(*str == '!' || *str == '@' || *str == '#' || *str == '$' || *str == '%' || *str == '^' || *str == '&' || *str == '*'
+		|| *str == '(' || *str == ')' || *str == '-' || *str == '{' || *str == '}' || *str == '[' || *str == ']' || *str == ':'
+		|| *str == ';' || *str == '"' || *str == '\'' || *str == '<' || *str == '>' || *str == '.' || *str == '/' || *str == '?'
+		|| *str == '~' || *str == '`' || *str == ',')
 		{
-			return 0;
+			
 		}
-		else if(op[0] == 'e')
+		else
 		{
-			if((*str == ' ') || (*str == '\0'))
+			stl++;
+			if(stl != sl)
 			{
-				return 0;
+				if(*str == ' ')
+				{
+					if((op[0] == 'e')&&(samelet == wl)&&(samelet==strn))
+					{
+						wce++;
+					}
+					if((op[0] == 'i')&&(samelet == wl))
+					{
+						wce++;		
+					}
+					strn = 0;
+					samelet = 0;
+					fw = findword;
+				}
+				else
+				{
+					if(*str == *fw)
+					{
+						samelet++;
+						strn++;
+						fw++;
+					}
+					else
+					{
+						if(wl != samelet)
+						{
+							samelet = 0;
+						}
+						fw = findword;
+						strn++;
+					}
+				}
 			}
 			else
 			{
-				return 1;
-			}
-		}
-		else
-		{	
-			return 1;
+				if(*str == *fw)
+				{
+					samelet++;
+					strn++;
+					fw++;
+				}
+				else
+				{
+					if(wl != samelet)
+					{
+						samelet = 0;
+					}
+					fw = findword;
+					strn++;
+				}
+				// printf("stl %d, stl %d\n", stl, sl);
+				if((op[0] == 'e')&&(samelet == wl)&&(samelet==strn))
+				{
+					wce++;
+				}
+				if((op[0] == 'i')&&(samelet == wl))
+				{
+					wce++;		
+				}
+			}				
+		}	
+		str++;
+	}
+	
+	if(wce != 0)
+	{
+		for (int i = 0; i < wce; i++)
+		{
+			printf("Found word \"%s\" in: \"%s\"\n", findword, temps);
 		}
 	}
-	// nežianu, kuris variantas geriau, pirmas trumpesnis ir be kodo kartojimosi, bet sunkiau suprantamas
-	// antrasis su kodo kartojimusi, bet lengviau suprantamas
-	// if(op[0] == 'i')
-	// {
-		// if((wordlen ==  sameletters))
-		// {
-			// return 0;
-		// }
-		// else
-		// {	
-			// return 1;
-		// }
-	// }
 	
-	// if(op[0] == 'e')
-	// {
-		// if( ((wordlen ==  sameletters)) && ((*str == ' ') || (*str == '\0')))
-		// {
-			// return 0;
-		// }
-		// else
-		// {	
-			// return 1;
-		// }
-	// }
+	printf("---------------------------------\n");
+	
+	return wce;
 }
 
 int main (int argc, char *argv[])
@@ -111,7 +146,14 @@ int main (int argc, char *argv[])
 	}
 	
 	char **words = loadfile(argv[1]);
+	int wordlen = 0;
 	char *word = argv[2];
+	
+	for (int i = 0; word[i] != '\0'; i++)
+	{
+		wordlen++;
+	}
+	
 	char op[2];
 	int ifgoodop = 0;
 	
@@ -146,31 +188,24 @@ int main (int argc, char *argv[])
 		// padaryti su malloc
 		char *allletters[100];
 		int lnb = 0;
+		int spnb = 0;
+		int wc = 0;
 		
+		int strl  = realstrlen(words[i]);
 		
-		findfirstletter(words[i], word, allletters, &lnb);
-		
-		for (int j = 0; j < lnb; j++)
-		{
-			int iffound = comparestr(allletters[j], word, op);
-			if(iffound == 0)
-			{
-				printf("Found word \"%s\" in %s\n", word, words[i]);
-				notfound++;
-			}
-		}		
+		wc = compares(words[i], word, op, wordlen, strl);
+		notfound += wc;
 	}
 	
 	if(!notfound)
 	{
-		printf("Not found word \"%s\" \n", word);
+		printf("Not found word \"%s\"\n", word);
 	}
-	
 	printf("Baigta");
 	return 0;
 }
 
-char ** loadfile(char *filename)
+char **loadfile(char *filename)
 {
 	FILE *f = fopen(filename, "r");
 	if(!f)
@@ -183,6 +218,7 @@ char ** loadfile(char *filename)
 
 	char buf[1000];
 	int i = 0;
+	
 	while(fgets(buf, 1000, f))
 	{
 		if(i == arrlen)
@@ -207,7 +243,7 @@ char ** loadfile(char *filename)
 		
 		if(ifspace == 0)
 		{
-			// buf = tempstr; negalima you can't assign arrays. You'd have to copy them with
+			// buf = tempstr; negalima you can't assign arrays. You'd have to copy
 			tempstr = buf;
 		}
 		
