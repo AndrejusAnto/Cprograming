@@ -48,44 +48,31 @@ int compares(char *str, char *findword, char *op, int wl, int sl)
 		|| *str == ';' || *str == '"' || *str == '\'' || *str == '<' || *str == '>' || *str == '.' || *str == '/' || *str == '?'
 		|| *str == '~' || *str == '`' || *str == ',')
 		{
-			
+			// ar raide ar simbolis
+			// ar paskutinis elementas, nes reikia atspauzdinti paskutinio žodžio duomenis
+			// ar tarpas, nes reikia atspauzdinti einamo žodžio duomenis
+			// koks zodzio ilgis, kad e arba i 
 		}
 		else
 		{
 			stl++;
-			if(stl != sl)
+			if(*str == ' ')
 			{
-				if(*str == ' ')
+				if((op[0] == 'e'))
 				{
-					if((op[0] == 'e')&&(samelet == wl)&&(samelet==strn))
+					if((samelet == wl)&&(samelet==strn))
 					{
 						wce++;
 					}
-					if((op[0] == 'i')&&(samelet == wl))
-					{
-						wce++;		
-					}
-					strn = 0;
 					samelet = 0;
+					strn = 0;
 					fw = findword;
 				}
-				else
+				if(op[0] == 'i')
 				{
-					if(*str == *fw)
-					{
-						samelet++;
-						strn++;
-						fw++;
-					}
-					else
-					{
-						if(wl != samelet)
-						{
-							samelet = 0;
-						}
-						fw = findword;
-						strn++;
-					}
+					samelet = 0;
+					strn = 0;
+					fw = findword;
 				}
 			}
 			else
@@ -95,24 +82,27 @@ int compares(char *str, char *findword, char *op, int wl, int sl)
 					samelet++;
 					strn++;
 					fw++;
+					if(op[0] == 'i')
+					{
+						if(samelet == wl)
+						{
+							wce++;
+						}
+					}
+					
+					if((op[0] == 'e') && (stl == sl))
+					{
+						if((samelet == wl)&&(samelet==strn))
+						{
+							wce++;
+						}
+					}
 				}
 				else
 				{
-					if(wl != samelet)
-					{
-						samelet = 0;
-					}
+					samelet = 0;
 					fw = findword;
 					strn++;
-				}
-				// printf("stl %d, stl %d\n", stl, sl);
-				if((op[0] == 'e')&&(samelet == wl)&&(samelet==strn))
-				{
-					wce++;
-				}
-				if((op[0] == 'i')&&(samelet == wl))
-				{
-					wce++;		
 				}
 			}				
 		}	
