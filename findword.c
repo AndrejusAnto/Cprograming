@@ -208,15 +208,28 @@ int main (int argc, char *argv[])
 		if(wc)
 		{
 			printsimbol(asl.allstrlen, wordlen);
-			// printf("---------------------------------\n");
 		}
 		notfound += wc;
 	}
 	
 	if(!notfound)
 	{
-		printf("Not found word \"%s\"\n", word);
-		printf("---------------------------------\n");
+		char *nfw = "Not found word";
+		int nfwlen = strlen(nfw);
+		int alnfwlen = nfwlen + wordlen + 2 + 1;
+		printf("%s \"%s\"\n", nfw, word);
+		
+		for (int i = 0; i < (alnfwlen + 1); i++)
+		{
+			if(i != alnfwlen)
+			{
+				printf("-");
+			}
+			else
+			{
+				printf("\n");
+			}
+		}
 	}
 	printf("Baigta");
 	return 0;
