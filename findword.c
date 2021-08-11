@@ -89,16 +89,10 @@ int compares(char *str, char *findword, char *op, int wl, int sl)
 					{
 						wce++;
 					}
-					samelet = 0;
-					strn = 0;
-					fw = findword;
 				}
-				if(op[0] == 'i')
-				{
-					samelet = 0;
-					strn = 0;
-					fw = findword;
-				}
+				samelet = 0;
+				strn = 0;
+				fw = findword;
 			}
 			else
 			{
@@ -107,21 +101,30 @@ int compares(char *str, char *findword, char *op, int wl, int sl)
 					samelet++;
 					strn++;
 					fw++;
-					if(op[0] == 'i')
+					
+					if(samelet == wl)
 					{
-						if(samelet == wl)
+						if( (op[0] == 'i') || ((op[0] == 'e') && (stl == sl)&&(samelet==strn)) )
 						{
 							wce++;
 						}
 					}
 					
-					if((op[0] == 'e') && (stl == sl))
-					{
-						if((samelet == wl)&&(samelet==strn))
-						{
-							wce++;
-						}
-					}
+					// if(op[0] == 'i')
+					// {
+						// if(samelet == wl)
+						// {
+							// wce++;
+						// }
+					// }
+					
+					// if((op[0] == 'e') && (stl == sl))
+					// {
+						// if((samelet == wl)&&(samelet==strn))
+						// {
+							// wce++;
+						// }
+					// }
 				}
 				else
 				{
