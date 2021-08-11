@@ -5,9 +5,15 @@
 const int STEPSIZE = 200;
 char **loadfile(char *filename);
 
-int realstrlen(char *str)
+struct StrLen
+{
+	int allstrlen;
+	int realstrlen;
+};
+
+struct StrLen realstrlen(char *str)
 {	
-	int strlen = 0;
+	struct StrLen astrl = {0};
 	
 	while(*str != '\0')
 	{
@@ -18,16 +24,38 @@ int realstrlen(char *str)
 		// if(*str != ' ' || *str != '!') cia negerai, nes lyginimas vyksta 1 variablo , o ne pvz. 2, sita condition visada bus true
 		// ir else niekada nesuveiks.
 		{
-			str++;
 		}
 		else
 		{
-			strlen++;
-			str++;			
+			astrl.realstrlen++;			
 		}
+		astrl.allstrlen++;
+		str++;
 	}
 	
-	return strlen;
+	return astrl;
+}
+void printsimbol(int number, int wordl)
+{
+	char *begin = "Found word ";
+	int lbegin = strlen(begin);
+	
+	char *end = " in: ";
+	int lend = strlen(end);
+	
+	int alllength = lbegin + (wordl + 2) + lend + (number + 2);
+	
+	for (int i = 0; i < (alllength + 1); i++)
+	{
+		if(i != (alllength))
+		{
+			printf("-");
+		}
+		else
+		{
+			printf("\n");
+		}
+	}
 }
 
 int compares(char *str, char *findword, char *op, int wl, int sl)
@@ -48,10 +76,7 @@ int compares(char *str, char *findword, char *op, int wl, int sl)
 		|| *str == ';' || *str == '"' || *str == '\'' || *str == '<' || *str == '>' || *str == '.' || *str == '/' || *str == '?'
 		|| *str == '~' || *str == '`' || *str == ',')
 		{
-			// ar raide ar simbolis
-			// ar paskutinis elementas, nes reikia atspauzdinti paskutinio žodžio duomenis
-			// ar tarpas, nes reikia atspauzdinti einamo žodžio duomenis
-			// koks zodzio ilgis, kad e arba i 
+			
 		}
 		else
 		{
@@ -117,8 +142,6 @@ int compares(char *str, char *findword, char *op, int wl, int sl)
 		}
 	}
 	
-	printf("---------------------------------\n");
-	
 	return wce;
 }
 
@@ -134,7 +157,6 @@ int main (int argc, char *argv[])
 		printf("Supply file name or word to find \n");
 		exit(1);
 	}
-	
 	char **words = loadfile(argv[1]);
 	int wordlen = 0;
 	char *word = argv[2];
@@ -175,21 +197,26 @@ int main (int argc, char *argv[])
 	
 	for (int i = 0; words[i] != NULL; i++)
 	{
-		// padaryti su malloc
-		char *allletters[100];
 		int lnb = 0;
 		int spnb = 0;
 		int wc = 0;
+		struct StrLen asl;
 		
-		int strl  = realstrlen(words[i]);
+		asl = realstrlen(words[i]);
 		
-		wc = compares(words[i], word, op, wordlen, strl);
+		wc = compares(words[i], word, op, wordlen, asl.realstrlen);
+		if(wc)
+		{
+			printsimbol(asl.allstrlen, wordlen);
+			// printf("---------------------------------\n");
+		}
 		notfound += wc;
 	}
 	
 	if(!notfound)
 	{
 		printf("Not found word \"%s\"\n", word);
+		printf("---------------------------------\n");
 	}
 	printf("Baigta");
 	return 0;
@@ -245,7 +272,7 @@ char **loadfile(char *filename)
 			}
 		}
 		
-		int slen = strlen(tempstr);
+		int slen = strlen(tempstr);	
 		char *str = (char *)malloc((slen + 1) * sizeof(char));
 		strcpy(str, tempstr);
 		lines[i] = str;
