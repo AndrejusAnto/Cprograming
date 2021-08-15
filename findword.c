@@ -2,12 +2,19 @@
 #include <stdlib.h>
 #include <string.h>
 
+// const tik šitam faile arba pvz. kokioje nors funkcijoje ar main
 const int STEPSIZE = 200;
 char **loadfile(char *filename);
 
+// galima naudoti nustatant array ilgį pvz. int arr[ARRAY_L], bet negalima (const) int array_l = 20; int arr[array_l] 
+// nes įvyksta anskčiau nei kodas užloadinamas
+#define ARRAY_L 20 // global
+// arr[STEPSIZE]; negalima
+ar[ARRAY_L]; // galima
+
 struct StrLen
 {
-	int allstrlen;
+	int allstrlen; // :sizebit, taip galima nurodyti bit dydį, 1 - reikšmės tarp 0-1, 2 - reikšmės tarp 0-3 ir t.t.
 	int realstrlen;
 };
 
@@ -35,6 +42,7 @@ struct StrLen realstrlen(char *str)
 	
 	return astrl;
 }
+
 void printsimbol(int number, int wordl)
 {
 	char *begin = "Found word ";
@@ -109,22 +117,6 @@ int compares(char *str, char *findword, char *op, int wl, int sl)
 							wce++;
 						}
 					}
-					
-					// if(op[0] == 'i')
-					// {
-						// if(samelet == wl)
-						// {
-							// wce++;
-						// }
-					// }
-					
-					// if((op[0] == 'e') && (stl == sl))
-					// {
-						// if((samelet == wl)&&(samelet==strn))
-						// {
-							// wce++;
-						// }
-					// }
 				}
 				else
 				{
@@ -160,80 +152,92 @@ int main (int argc, char *argv[])
 		printf("Supply file name or word to find \n");
 		exit(1);
 	}
-	char **words = loadfile(argv[1]);
-	int wordlen = 0;
-	char *word = argv[2];
 	
-	for (int i = 0; word[i] != '\0'; i++)
+	char *filename = argv[1];
+	int filenize = strlen(filename) - 1;
+
+	if((filename[filenize] == 't') && (filename[filenize-1] == 'x') && (filename[filenize-2] == 't') && (filename[filenize-3] == '.'))
 	{
-		wordlen++;
-	}
-	
-	char op[2];
-	int ifgoodop = 0;
-	
-	printf("E(xactly) or I(ncluded)? ");
-	while(!ifgoodop)
-	{
-		fgets(op, 2, stdin);
-		if(op[0] != '\n')
+		char **words = loadfile(argv[1]);
+		int wordlen = 0;
+		char *word = argv[2];
+		
+		for (int i = 0; word[i] != '\0'; i++)
 		{
-			switch(op[0])
-			{	
-				case 'E':
-				case 'e':
-					op[0] = 'e';
-					ifgoodop = 1;
-					break;
-				case 'I':
-				case 'i':
-					op[0] = 'i';
-					ifgoodop = 1;
-					break;
-				default:
-					printf("No, No, No, E(e) arba I(i) ");
-			}
+			wordlen++;
 		}
-	}
-	
-	int notfound = 0;
-	
-	for (int i = 0; words[i] != NULL; i++)
-	{
-		int lnb = 0;
-		int spnb = 0;
-		int wc = 0;
-		struct StrLen asl;
 		
-		asl = realstrlen(words[i]);
+		char op[2];
+		int ifgoodop = 0;
 		
-		wc = compares(words[i], word, op, wordlen, asl.realstrlen);
-		if(wc)
+		printf("E(xactly) or I(ncluded)? ");
+		while(!ifgoodop)
 		{
-			printsimbol(asl.allstrlen, wordlen);
-		}
-		notfound += wc;
-	}
-	
-	if(!notfound)
-	{
-		char *nfw = "Not found word";
-		int nfwlen = strlen(nfw);
-		int alnfwlen = nfwlen + wordlen + 2 + 1;
-		printf("%s \"%s\"\n", nfw, word);
-		
-		for (int i = 0; i < (alnfwlen + 1); i++)
-		{
-			if(i != alnfwlen)
+			fgets(op, 2, stdin);
+			if(op[0] != '\n')
 			{
-				printf("-");
+				switch(op[0])
+				{	
+					case 'E':
+					case 'e':
+						op[0] = 'e';
+						ifgoodop = 1;
+						break;
+					case 'I':
+					case 'i':
+						op[0] = 'i';
+						ifgoodop = 1;
+						break;
+					default:
+						printf("No, No, No, E(e) arba I(i) \n");
+				}
 			}
-			else
+		}
+		
+		int notfound = 0;
+		
+		for (int i = 0; words[i] != NULL; i++)
+		{
+			int lnb = 0;
+			int spnb = 0;
+			int wc = 0;
+			struct StrLen asl;
+			
+			asl = realstrlen(words[i]);
+			
+			wc = compares(words[i], word, op, wordlen, asl.realstrlen);
+			if(wc)
 			{
-				printf("\n");
+				printsimbol(asl.allstrlen, wordlen);
+			}
+			notfound += wc;
+		}
+		
+		if(!notfound)
+		{
+			char *nfw = "Not found word";
+			int nfwlen = strlen(nfw);
+			int alnfwlen = nfwlen + wordlen + 2 + 1;
+			printf("%s \"%s\"\n", nfw, word);
+			
+			for (int i = 0; i < (alnfwlen + 1); i++)
+			{
+				if(i != alnfwlen)
+				{
+					printf("-");
+				}
+				else
+				{
+					printf("\n");
+				}
 			}
 		}
 	}
+	else
+	{
+		printf("No, no, no, blogas failas\n");
+	}
+	
 	printf("Baigta");
 	return 0;
 }
