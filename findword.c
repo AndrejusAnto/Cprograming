@@ -75,7 +75,6 @@ int compares(char *str, char *findword, char *op, int wl, int sl)
 	char *temps = str;
 	int stl = 0;
 	int wce = 0;
-	// int wci = 0;
 
 	while(*str != '\0')
 	{
@@ -168,10 +167,10 @@ int main (int argc, char *argv[])
 		}
 		
 		char op[2];
-		int ifgoodop = 0;
+		int ops = 0;
 		
 		printf("E(xactly) or I(ncluded)? ");
-		while(!ifgoodop)
+		while(!ops)
 		{
 			fgets(op, 2, stdin);
 			if(op[0] != '\n')
@@ -181,12 +180,12 @@ int main (int argc, char *argv[])
 					case 'E':
 					case 'e':
 						op[0] = 'e';
-						ifgoodop = 1;
+						ops = 1;
 						break;
 					case 'I':
 					case 'i':
 						op[0] = 'i';
-						ifgoodop = 1;
+						ops = 1;
 						break;
 					default:
 						printf("No, No, No, E(e) arba I(i) \n");
