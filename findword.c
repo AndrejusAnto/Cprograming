@@ -1,10 +1,11 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include "ifsimbol.h"
 
 // const tik šitam faile arba pvz. kokioje nors funkcijoje ar main
 const int STEPSIZE = 200;
-char **loadfile(char *filename);
+// unsigned char **loadfile(unsigned char *filename); galima taip ir tada fukcija gali būti apibrėžta žemiau main
 
 // galima naudoti nustatant array ilgį pvz. int arr[ARRAY_L], bet negalima (const) int array_l = 20; int arr[array_l] 
 // nes įvyksta anskčiau nei kodas užloadinamas
@@ -12,29 +13,102 @@ char **loadfile(char *filename);
 // arr[STEPSIZE]; negalima
 ar[ARRAY_L]; // galima
 
+unsigned char **loadfile(unsigned char *filename)
+{
+	FILE *f = fopen(filename, "r");
+	if(!f)
+	{
+		fprintf(stderr, "Cant open %s \n", filename);
+		return NULL;
+	}
+	int arrlen = 0;
+	unsigned char **lines = NULL;
+
+	unsigned char buf[1000];
+	int i = 0;
+	
+	while(fgets(buf, 1000, f))
+	{
+		if(i == arrlen)
+		{
+			arrlen += STEPSIZE;
+			unsigned char **newlines = realloc(lines, arrlen * sizeof(unsigned char *));
+			if(!newlines)
+			{
+				fprintf(stderr, "Cant reaalocate \n");
+				exit(1);
+			}
+			lines = newlines;
+		}
+		
+		unsigned char *tempstr;
+		int ifspace = 0;
+		for(int j = 0; buf[j] == ' '; j++)
+		{
+			tempstr = buf + (j+1);
+			ifspace++;
+		}
+		
+		if(ifspace == 0)
+		{
+			// buf = tempstr; negalima you can't assign arrays. You'd have to copy
+			tempstr = buf;
+		}
+		
+		for(int k = 0; tempstr[k] != '\0'; k++)
+		{
+			if(tempstr[k] == '\n')
+			{
+				tempstr[k] = '\0';
+			}
+		}
+		
+		int slen = strlen(tempstr);	
+		unsigned char *str = (unsigned char *)malloc((slen + 1) * sizeof(unsigned char));
+		strcpy(str, tempstr);
+		lines[i] = str;
+
+		i++;
+	}
+	fclose(f);
+	
+	if(i == arrlen)
+	{
+		unsigned char **newarr = realloc(lines, (arrlen+1) * sizeof(unsigned char *));
+		if(!newarr)
+		{
+			printf("Blogai");
+			exit(1);
+		}
+		lines = newarr;
+	}
+
+	lines[i] = NULL;
+	return lines;
+}
+
 struct StrLen
 {
 	int allstrlen; // :sizebit, taip galima nurodyti bit dydį, 1 - reikšmės tarp 0-1, 2 - reikšmės tarp 0-3 ir t.t.
 	int realstrlen;
 };
 
-struct StrLen realstrlen(char *str)
+struct StrLen realstrlen(unsigned char *str)
 {	
 	struct StrLen astrl = {0};
 	
 	while(*str != '\0')
 	{
-		if(*str == '!' || *str == '@' || *str == '#' || *str == '$' || *str == '%' || *str == '^' || *str == '&' || *str == '*'
-		|| *str == '(' || *str == ')' || *str == '-' || *str == '{' || *str == '}' || *str == '[' || *str == ']' || *str == ':'
-		|| *str == ';' || *str == '"' || *str == '\'' || *str == '<' || *str == '>' || *str == '.' || *str == '/' || *str == '?'
-		|| *str == '~' || *str == '`' || *str == ',')
+		int ifs = ifsimbol(*str);
+		if(ifs == 0)
+		// if(*str == '!' || *str == '@' || *str == '#' || *str == '$' || *str == '%' || *str == '^' || *str == '&' || *str == '*'
+		// || *str == '(' || *str == ')' || *str == '-' || *str == '{' || *str == '}' || *str == '[' || *str == ']' || *str == ':'
+		// || *str == ';' || *str == '"' || *str == '\'' || *str == '<' || *str == '>' || *str == '.' || *str == '/' || *str == '?'
+		// || *str == '~' || *str == '`' || *str == ',')
 		// if(*str != ' ' || *str != '!') cia negerai, nes lyginimas vyksta 1 variablo , o ne pvz. 2, sita condition visada bus true
 		// ir else niekada nesuveiks.
 		{
-		}
-		else
-		{
-			astrl.realstrlen++;			
+			astrl.realstrlen++;
 		}
 		astrl.allstrlen++;
 		str++;
@@ -45,10 +119,10 @@ struct StrLen realstrlen(char *str)
 
 void printsimbol(int number, int wordl)
 {
-	char *begin = "Found word ";
+	unsigned char *begin = "Found word ";
 	int lbegin = strlen(begin);
 	
-	char *end = " in: ";
+	unsigned char *end = " in: ";
 	int lend = strlen(end);
 	
 	int alllength = lbegin + (wordl + 2) + lend + (number + 2);
@@ -66,26 +140,23 @@ void printsimbol(int number, int wordl)
 	}
 }
 
-int compares(char *str, char *findword, char *op, int wl, int sl)
-{
-
+int compares(unsigned char *str, unsigned char *copystr, unsigned char *findword, unsigned char *findwordcopy, unsigned char *op, int wl, int sl)
+{	
 	int samelet = 0;
 	int strn = 0;
-	char *fw = findword;
-	char *temps = str;
+	unsigned char *fw = findword;
+	unsigned char *temps = str;
 	int stl = 0;
 	int wce = 0;
 
 	while(*str != '\0')
 	{
-		if(*str == '!' || *str == '@' || *str == '#' || *str == '$' || *str == '%' || *str == '^' || *str == '&' || *str == '*'
-		|| *str == '(' || *str == ')' || *str == '-' || *str == '{' || *str == '}' || *str == '[' || *str == ']' || *str == ':'
-		|| *str == ';' || *str == '"' || *str == '\'' || *str == '<' || *str == '>' || *str == '.' || *str == '/' || *str == '?'
-		|| *str == '~' || *str == '`' || *str == ',')
-		{
-			
-		}
-		else
+		int ifs = ifsimbol(*str);
+		if(ifs==0)
+		// if(*str == '!' || *str == '@' || *str == '#' || *str == '$' || *str == '%' || *str == '^' || *str == '&' || *str == '*'
+		// || *str == '(' || *str == ')' || *str == '-' || *str == '{' || *str == '}' || *str == '[' || *str == ']' || *str == ':'
+		// || *str == ';' || *str == '"' || *str == '\'' || *str == '<' || *str == '>' || *str == '.' || *str == '/' || *str == '?'
+		// || *str == '~' || *str == '`' || *str == ',')
 		{
 			stl++;
 			if(*str == ' ')
@@ -103,7 +174,7 @@ int compares(char *str, char *findword, char *op, int wl, int sl)
 			}
 			else
 			{
-				if(*str == *fw)
+				if(tolower(*str) == *fw)
 				{
 					samelet++;
 					strn++;
@@ -123,7 +194,7 @@ int compares(char *str, char *findword, char *op, int wl, int sl)
 					fw = findword;
 					strn++;
 				}
-			}				
+			}
 		}	
 		str++;
 	}
@@ -132,14 +203,75 @@ int compares(char *str, char *findword, char *op, int wl, int sl)
 	{
 		for (int i = 0; i < wce; i++)
 		{
-			printf("Found word \"%s\" in: \"%s\"\n", findword, temps);
+			printf("Found word \"%s\" in: \"%s\"\n", findwordcopy, copystr);
 		}
 	}
 	
 	return wce;
 }
 
-int main (int argc, char *argv[])
+void casefold(unsigned char *cfstr, unsigned long *Upletter, unsigned long *Lowletter, unsigned int realcasef)
+{	
+	for(int i = 0; cfstr[i] != '\0'; i++)
+	{
+		int ind;
+		int indx = -1;
+		unsigned long lowercl;
+		
+		int ifs = ifsimbol(cfstr[i]);
+		if((ifs == 0))
+		// if(cfstr[i] == '!' || cfstr[i] == '@' || cfstr[i] == '#' || cfstr[i] == '$' || cfstr[i] == '%' || cfstr[i] == '^' || cfstr[i] == '&' || cfstr[i] == '*'
+		// || cfstr[i] == '(' || cfstr[i] == ')' || cfstr[i] == '-' || cfstr[i] == '{' || cfstr[i] == '}' || cfstr[i] == '[' || cfstr[i] == ']' || cfstr[i] == ':'
+		// || cfstr[i] == ';' || cfstr[i] == '"' || cfstr[i] == ',' || cfstr[i] == '<' || cfstr[i] == '>' || cfstr[i] == '.' || cfstr[i] == '/' || cfstr[i] == '?'
+		// || cfstr[i] == '~' || cfstr[i] == '`' || cfstr[i] == ' ' || cfstr[i] == '\'') // sugaloti kaip sutraukti į funkciją
+		{
+			if(cfstr[i] != ' ')
+			{
+				// šarasBatas čia nulūžta
+				unsigned char b1 = cfstr[i] >> 5;
+				unsigned char b2 = cfstr[i] >> 4;
+				unsigned char b3 = cfstr[i] >> 3;
+				if((b1 == 6))
+				{
+					ind = i;
+				
+					int wrb1 = cfstr[i] - 192;
+					int wrb2 = cfstr[i+1] - 128;
+					int result = (wrb1 << 6) | wrb2;
+					
+					for (int j = 0; j < realcasef; j++)
+					{
+						// galbūt geresnį algoritmą ieškojimui
+						if(Upletter[j] == result)
+						{
+							indx = j;
+							break;
+						}
+					}
+					if(indx != -1)
+					{
+						lowercl = Lowletter[indx];
+						unsigned char tempn1 = (char)(lowercl << 2);
+						unsigned char tempn2 = (char)(tempn1 >> 2);
+						unsigned char tempn3 = tempn2 + 128;
+						cfstr[ind] = (char)((24 << 3) | (lowercl >> 6));
+						cfstr[ind+1] = (char)tempn3;
+					}
+				}
+				else
+				{
+					if(cfstr[i] <= 0x005A)
+					{
+						cfstr[i] += 32;
+					}
+				}
+			}
+		}
+	}
+	// printf("cfstr[i] %s\n", cfstr);
+}
+
+int main (int argc, unsigned char *argv[])
 {
 	if(argc == 1)
 	{
@@ -152,21 +284,107 @@ int main (int argc, char *argv[])
 		exit(1);
 	}
 	
-	char *filename = argv[1];
+	unsigned char *filename = argv[1];
 	int filenize = strlen(filename) - 1;
+	
+	unsigned char *word = argv[2];
+	int wordlen = 0;
+
+	unsigned char *wordcopy = NULL;
+	for (int i = 0; word[i] != '\0'; i++)
+	{
+		wordlen++;
+		wordcopy = realloc(wordcopy, wordlen * sizeof(unsigned char));
+		wordcopy[i] = word[i];
+		
+		if(word[i+1] == '\0')
+		{
+			wordcopy[wordlen] = '\0';
+		}
+	}
+			
+	unsigned char **casefolding = loadfile("casefolding.txt");
+	unsigned char prefix[]= "0x";
+
+	unsigned long *Upletter = NULL;
+	unsigned long *Lowletter = NULL;
+
+	unsigned int arrsize = 0;
+
+	unsigned int casef = 0;
+	unsigned int realcasef = 0;
+
+	while(casefolding[casef])
+	{
+		unsigned long casehex;
+		unsigned char casechar1 = casefolding[casef][6];
+		unsigned char casechar2 = casefolding[casef][7];
+		if((casechar1 == 'F') || (casechar2 == 'F') || (casechar1 == 'S') || (casechar2 == 'S') || (casechar1 == 'T') || (casechar2 == 'T'))
+		{
+			// printf("Nepalaikomas simbolis\n");
+		}
+		else
+		{
+			char uphexstr[8];
+			char lowhexstr[8];
+			long hexnub;
+			
+			if(realcasef == arrsize)
+			{
+				arrsize += STEPSIZE;
+				unsigned long *newlup = realloc(Upletter, arrsize * sizeof(unsigned long));
+				unsigned long *newllow = realloc(Lowletter, arrsize * sizeof(unsigned long));
+				
+				if(!newlup || !newllow)
+				{
+					fprintf(stderr, "Cant reaalocate for Upper or Lower letter array\n");
+					exit(1);
+				}
+				Upletter = newlup;
+				Lowletter = newllow;
+				
+			}
+		
+			for (int j = 0; prefix[j] != '\0'; j++)
+			{
+				uphexstr[j] = prefix[j];
+				lowhexstr[j] = prefix[j];
+			};
+			
+			int upstrlen = 0;
+			for(int j = 0; casefolding[casef][j] != ';'; j++)
+			{
+				uphexstr[j+2] = casefolding[casef][j];
+				upstrlen++;
+			}
+			uphexstr[upstrlen+2] = '\0';
+			casehex = strtol(uphexstr, NULL, 16);
+			Upletter[realcasef] = casehex;
+			
+			int lowstrlen = upstrlen + 5;
+			int lowstr = 2;
+			
+			for(int j = lowstrlen; casefolding[casef][j] != ';'; j++)
+			{
+				lowhexstr[lowstr] = casefolding[casef][j];
+				lowstr++;
+			}
+			lowhexstr[lowstr] = '\0';
+			casehex = strtol(lowhexstr, NULL, 16);
+			Lowletter[realcasef] = casehex;
+
+			realcasef++;
+		}
+		casef++;
+	}
+
+	casefold(word, Upletter, Lowletter, realcasef);
 
 	if((filename[filenize] == 't') && (filename[filenize-1] == 'x') && (filename[filenize-2] == 't') && (filename[filenize-3] == '.'))
 	{
-		char **words = loadfile(argv[1]);
-		int wordlen = 0;
-		char *word = argv[2];
+		unsigned char **words = loadfile(filename);
 		
-		for (int i = 0; word[i] != '\0'; i++)
-		{
-			wordlen++;
-		}
-		
-		char op[2];
+		unsigned char op[2];
 		int ops = 0;
 		
 		printf("E(xactly) or I(ncluded)? ");
@@ -201,10 +419,16 @@ int main (int argc, char *argv[])
 			int spnb = 0;
 			int wc = 0;
 			struct StrLen asl;
-			
+			unsigned char *wordscopy;
+			int wordsl = strlen(words[i]) + 1;
+			wordscopy = malloc(wordsl * sizeof(char));
+			strcpy(wordscopy, words[i]);
+
+			casefold(words[i], Upletter, Lowletter, realcasef);
+
 			asl = realstrlen(words[i]);
 			
-			wc = compares(words[i], word, op, wordlen, asl.realstrlen);
+			wc = compares(words[i], wordscopy, word, wordcopy, op, wordlen, asl.realstrlen);
 			if(wc)
 			{
 				printsimbol(asl.allstrlen, wordlen);
@@ -214,10 +438,10 @@ int main (int argc, char *argv[])
 		
 		if(!notfound)
 		{
-			char *nfw = "Not found word";
+			unsigned char *nfw = "Not found word";
 			int nfwlen = strlen(nfw);
 			int alnfwlen = nfwlen + wordlen + 2 + 1;
-			printf("%s \"%s\"\n", nfw, word);
+			printf("%s \"%s\"\n", nfw, wordcopy);
 			
 			for (int i = 0; i < (alnfwlen + 1); i++)
 			{
@@ -236,81 +460,7 @@ int main (int argc, char *argv[])
 	{
 		printf("No, no, no, blogas failas\n");
 	}
-	
+
 	printf("Baigta");
 	return 0;
-}
-
-char **loadfile(char *filename)
-{
-	FILE *f = fopen(filename, "r");
-	if(!f)
-	{
-		fprintf(stderr, "Cant open %s \n", filename);
-		return NULL;
-	}
-	int arrlen = 0;
-	char **lines = NULL;
-
-	char buf[1000];
-	int i = 0;
-	
-	while(fgets(buf, 1000, f))
-	{
-		if(i == arrlen)
-		{
-			arrlen += STEPSIZE;
-			char **newlines = realloc(lines, arrlen * sizeof(char *));
-			if(!newlines)
-			{
-				fprintf(stderr, "Cant reaalocate \n");
-				exit(1);
-			}
-			lines = newlines;
-		}
-		
-		char *tempstr;
-		int ifspace = 0;
-		for(int j = 0; buf[j] == ' '; j++)
-		{
-			tempstr = buf + (j+1);
-			ifspace++;
-		}
-		
-		if(ifspace == 0)
-		{
-			// buf = tempstr; negalima you can't assign arrays. You'd have to copy
-			tempstr = buf;
-		}
-		
-		for(int k = 0; tempstr[k] != '\0'; k++)
-		{
-			if(tempstr[k] == '\n')
-			{
-				tempstr[k] = '\0';
-			}
-		}
-		
-		int slen = strlen(tempstr);	
-		char *str = (char *)malloc((slen + 1) * sizeof(char));
-		strcpy(str, tempstr);
-		lines[i] = str;
-
-		i++;
-	}
-	fclose(f);
-	
-	if(i == arrlen)
-	{
-		char **newarr = realloc(lines, (arrlen+1) * sizeof(char *));
-		if(!newarr)
-		{
-			printf("Blogai");
-			exit(1);
-		}
-		lines = newarr;
-	}
-
-	lines[i] = NULL;
-	return lines;
 }
