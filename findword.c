@@ -101,12 +101,6 @@ struct StrLen realstrlen(unsigned char *str)
 	{
 		int ifs = ifsimbol(*str);
 		if(ifs == 0)
-		// if(*str == '!' || *str == '@' || *str == '#' || *str == '$' || *str == '%' || *str == '^' || *str == '&' || *str == '*'
-		// || *str == '(' || *str == ')' || *str == '-' || *str == '{' || *str == '}' || *str == '[' || *str == ']' || *str == ':'
-		// || *str == ';' || *str == '"' || *str == '\'' || *str == '<' || *str == '>' || *str == '.' || *str == '/' || *str == '?'
-		// || *str == '~' || *str == '`' || *str == ',')
-		// if(*str != ' ' || *str != '!') cia negerai, nes lyginimas vyksta 1 variablo , o ne pvz. 2, sita condition visada bus true
-		// ir else niekada nesuveiks.
 		{
 			astrl.realstrlen++;
 		}
@@ -153,10 +147,6 @@ int compares(unsigned char *str, unsigned char *copystr, unsigned char *findword
 	{
 		int ifs = ifsimbol(*str);
 		if(ifs==0)
-		// if(*str == '!' || *str == '@' || *str == '#' || *str == '$' || *str == '%' || *str == '^' || *str == '&' || *str == '*'
-		// || *str == '(' || *str == ')' || *str == '-' || *str == '{' || *str == '}' || *str == '[' || *str == ']' || *str == ':'
-		// || *str == ';' || *str == '"' || *str == '\'' || *str == '<' || *str == '>' || *str == '.' || *str == '/' || *str == '?'
-		// || *str == '~' || *str == '`' || *str == ',')
 		{
 			stl++;
 			if(*str == ' ')
@@ -210,7 +200,84 @@ int compares(unsigned char *str, unsigned char *copystr, unsigned char *findword
 	return wce;
 }
 
-void casefold(unsigned char *cfstr, unsigned long *Upletter, unsigned long *Lowletter, unsigned int realcasef)
+unsigned long *Upletter = NULL;
+unsigned long *Lowletter = NULL;
+
+unsigned int casef = 0;
+unsigned int realcasef = 0;
+
+void loadcaseffile(void)
+{
+	unsigned char **casefolding = loadfile("casefolding.txt");
+	unsigned char prefix[]= "0x";
+	unsigned int arrsize = 0;
+	
+	while(casefolding[casef])
+	{
+		unsigned long casehex;
+		unsigned char casechar1 = casefolding[casef][6];
+		unsigned char casechar2 = casefolding[casef][7];
+		if((casechar1 == 'F') || (casechar2 == 'F') || (casechar1 == 'S') || (casechar2 == 'S') || (casechar1 == 'T') || (casechar2 == 'T'))
+		{
+			// printf("Nepalaikomas simbolis\n");
+		}
+		else
+		{
+			char uphexstr[8];
+			char lowhexstr[8];
+			long hexnub;
+			
+			if(realcasef == arrsize)
+			{
+				arrsize += STEPSIZE;
+				unsigned long *newlup = realloc(Upletter, arrsize * sizeof(unsigned long));
+				unsigned long *newllow = realloc(Lowletter, arrsize * sizeof(unsigned long));
+				
+				if(!newlup || !newllow)
+				{
+					fprintf(stderr, "Cant reaalocate for Upper or Lower letter array\n");
+					exit(1);
+				}
+				Upletter = newlup;
+				Lowletter = newllow;
+				
+			}
+		
+			for (int j = 0; prefix[j] != '\0'; j++)
+			{
+				uphexstr[j] = prefix[j];
+				lowhexstr[j] = prefix[j];
+			};
+			
+			int upstrlen = 0;
+			for(int j = 0; casefolding[casef][j] != ';'; j++)
+			{
+				uphexstr[j+2] = casefolding[casef][j];
+				upstrlen++;
+			}
+			uphexstr[upstrlen+2] = '\0';
+			casehex = strtol(uphexstr, NULL, 16);
+			Upletter[realcasef] = casehex;
+			
+			int lowstrlen = upstrlen + 5;
+			int lowstr = 2;
+			
+			for(int j = lowstrlen; casefolding[casef][j] != ';'; j++)
+			{
+				lowhexstr[lowstr] = casefolding[casef][j];
+				lowstr++;
+			}
+			lowhexstr[lowstr] = '\0';
+			casehex = strtol(lowhexstr, NULL, 16);
+			Lowletter[realcasef] = casehex;
+
+			realcasef++;
+		}
+		casef++;
+	}
+}
+
+void casefold(unsigned char *cfstr, unsigned int realcasef)
 {	
 	for(int i = 0; cfstr[i] != '\0'; i++)
 	{
@@ -220,14 +287,9 @@ void casefold(unsigned char *cfstr, unsigned long *Upletter, unsigned long *Lowl
 		
 		int ifs = ifsimbol(cfstr[i]);
 		if((ifs == 0))
-		// if(cfstr[i] == '!' || cfstr[i] == '@' || cfstr[i] == '#' || cfstr[i] == '$' || cfstr[i] == '%' || cfstr[i] == '^' || cfstr[i] == '&' || cfstr[i] == '*'
-		// || cfstr[i] == '(' || cfstr[i] == ')' || cfstr[i] == '-' || cfstr[i] == '{' || cfstr[i] == '}' || cfstr[i] == '[' || cfstr[i] == ']' || cfstr[i] == ':'
-		// || cfstr[i] == ';' || cfstr[i] == '"' || cfstr[i] == ',' || cfstr[i] == '<' || cfstr[i] == '>' || cfstr[i] == '.' || cfstr[i] == '/' || cfstr[i] == '?'
-		// || cfstr[i] == '~' || cfstr[i] == '`' || cfstr[i] == ' ' || cfstr[i] == '\'') // sugaloti kaip sutraukti į funkciją
 		{
 			if(cfstr[i] != ' ')
 			{
-				// šarasBatas čia nulūžta
 				unsigned char b1 = cfstr[i] >> 5;
 				unsigned char b2 = cfstr[i] >> 4;
 				unsigned char b3 = cfstr[i] >> 3;
@@ -294,6 +356,7 @@ int main (int argc, unsigned char *argv[])
 	for (int i = 0; word[i] != '\0'; i++)
 	{
 		wordlen++;
+		// gal kas realloc kas 2 baitus?
 		wordcopy = realloc(wordcopy, wordlen * sizeof(unsigned char));
 		wordcopy[i] = word[i];
 		
@@ -302,83 +365,9 @@ int main (int argc, unsigned char *argv[])
 			wordcopy[wordlen] = '\0';
 		}
 	}
-			
-	unsigned char **casefolding = loadfile("casefolding.txt");
-	unsigned char prefix[]= "0x";
+	loadcaseffile();
 
-	unsigned long *Upletter = NULL;
-	unsigned long *Lowletter = NULL;
-
-	unsigned int arrsize = 0;
-
-	unsigned int casef = 0;
-	unsigned int realcasef = 0;
-
-	while(casefolding[casef])
-	{
-		unsigned long casehex;
-		unsigned char casechar1 = casefolding[casef][6];
-		unsigned char casechar2 = casefolding[casef][7];
-		if((casechar1 == 'F') || (casechar2 == 'F') || (casechar1 == 'S') || (casechar2 == 'S') || (casechar1 == 'T') || (casechar2 == 'T'))
-		{
-			// printf("Nepalaikomas simbolis\n");
-		}
-		else
-		{
-			char uphexstr[8];
-			char lowhexstr[8];
-			long hexnub;
-			
-			if(realcasef == arrsize)
-			{
-				arrsize += STEPSIZE;
-				unsigned long *newlup = realloc(Upletter, arrsize * sizeof(unsigned long));
-				unsigned long *newllow = realloc(Lowletter, arrsize * sizeof(unsigned long));
-				
-				if(!newlup || !newllow)
-				{
-					fprintf(stderr, "Cant reaalocate for Upper or Lower letter array\n");
-					exit(1);
-				}
-				Upletter = newlup;
-				Lowletter = newllow;
-				
-			}
-		
-			for (int j = 0; prefix[j] != '\0'; j++)
-			{
-				uphexstr[j] = prefix[j];
-				lowhexstr[j] = prefix[j];
-			};
-			
-			int upstrlen = 0;
-			for(int j = 0; casefolding[casef][j] != ';'; j++)
-			{
-				uphexstr[j+2] = casefolding[casef][j];
-				upstrlen++;
-			}
-			uphexstr[upstrlen+2] = '\0';
-			casehex = strtol(uphexstr, NULL, 16);
-			Upletter[realcasef] = casehex;
-			
-			int lowstrlen = upstrlen + 5;
-			int lowstr = 2;
-			
-			for(int j = lowstrlen; casefolding[casef][j] != ';'; j++)
-			{
-				lowhexstr[lowstr] = casefolding[casef][j];
-				lowstr++;
-			}
-			lowhexstr[lowstr] = '\0';
-			casehex = strtol(lowhexstr, NULL, 16);
-			Lowletter[realcasef] = casehex;
-
-			realcasef++;
-		}
-		casef++;
-	}
-
-	casefold(word, Upletter, Lowletter, realcasef);
+	casefold(word, realcasef);
 
 	if((filename[filenize] == 't') && (filename[filenize-1] == 'x') && (filename[filenize-2] == 't') && (filename[filenize-3] == '.'))
 	{
@@ -424,7 +413,7 @@ int main (int argc, unsigned char *argv[])
 			wordscopy = malloc(wordsl * sizeof(char));
 			strcpy(wordscopy, words[i]);
 
-			casefold(words[i], Upletter, Lowletter, realcasef);
+			casefold(words[i], realcasef);
 
 			asl = realstrlen(words[i]);
 			
