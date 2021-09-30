@@ -3,15 +3,7 @@
 #include <string.h>
 #include "ifsimbol.h"
 
-// const tik šitam faile arba pvz. kokioje nors funkcijoje ar main
 const int STEPSIZE = 200;
-// unsigned char **loadfile(unsigned char *filename); galima taip ir tada fukcija gali būti apibrėžta žemiau main
-
-// galima naudoti nustatant array ilgį pvz. int arr[ARRAY_L], bet negalima (const) int array_l = 20; int arr[array_l] 
-// nes įvyksta anskčiau nei kodas užloadinamas
-#define ARRAY_L 20 // global
-// arr[STEPSIZE]; negalima
-ar[ARRAY_L]; // galima
 
 unsigned char **loadfile(unsigned char *filename)
 {
@@ -277,7 +269,7 @@ void loadcaseffile(void)
 	}
 }
 
-void casefold(unsigned char *cfstr, unsigned int realcasef)
+void casefold(unsigned char *cfstr)
 {	
 	for(int i = 0; cfstr[i] != '\0'; i++)
 	{
@@ -293,23 +285,45 @@ void casefold(unsigned char *cfstr, unsigned int realcasef)
 				unsigned char b1 = cfstr[i] >> 5;
 				unsigned char b2 = cfstr[i] >> 4;
 				unsigned char b3 = cfstr[i] >> 3;
+				// gal pabaigti su kitas utf kodavimais?
 				if((b1 == 6))
 				{
 					ind = i;
 				
 					int wrb1 = cfstr[i] - 192;
 					int wrb2 = cfstr[i+1] - 128;
-					int result = (wrb1 << 6) | wrb2;
+					unsigned long result = (unsigned long)(wrb1 << 6) | wrb2;
 					
-					for (int j = 0; j < realcasef; j++)
+					int pr = 0;
+					int pb = realcasef;
+					int vid = (pr + pb) / 2;
+					int tempv = 0;
+					while(1)
 					{
-						// galbūt geresnį algoritmą ieškojimui
-						if(Upletter[j] == result)
+						if(tempv == Upletter[vid])
 						{
-							indx = j;
 							break;
 						}
+						
+						if(result == Upletter[vid])
+						{
+							indx = vid;
+							break;
+						}
+						else if(result > Upletter[vid])
+						{
+							pr = vid;
+							tempv = Upletter[vid];
+						}
+						else
+						{
+							pb = vid;
+							tempv = Upletter[vid];
+						}
+
+						vid = (pr + pb)/2;
 					}
+
 					if(indx != -1)
 					{
 						lowercl = Lowletter[indx];
@@ -330,7 +344,6 @@ void casefold(unsigned char *cfstr, unsigned int realcasef)
 			}
 		}
 	}
-	// printf("cfstr[i] %s\n", cfstr);
 }
 
 int main (int argc, unsigned char *argv[])
@@ -356,10 +369,12 @@ int main (int argc, unsigned char *argv[])
 	for (int i = 0; word[i] != '\0'; i++)
 	{
 		wordlen++;
-		// gal kas realloc kas 2 baitus?
-		wordcopy = realloc(wordcopy, wordlen * sizeof(unsigned char));
-		wordcopy[i] = word[i];
-		
+		if(wordlen == 1 || (wordlen % 2 == 0))
+		{
+			// printf("wordlen %d = %d\n", wordlen, (wordlen + 2));
+			wordcopy = realloc(wordcopy, (i + 2) * sizeof(unsigned char));
+		}
+		wordcopy[i] = word[i];	
 		if(word[i+1] == '\0')
 		{
 			wordcopy[wordlen] = '\0';
@@ -367,7 +382,7 @@ int main (int argc, unsigned char *argv[])
 	}
 	loadcaseffile();
 
-	casefold(word, realcasef);
+	casefold(word);
 
 	if((filename[filenize] == 't') && (filename[filenize-1] == 'x') && (filename[filenize-2] == 't') && (filename[filenize-3] == '.'))
 	{
@@ -411,9 +426,10 @@ int main (int argc, unsigned char *argv[])
 			unsigned char *wordscopy;
 			int wordsl = strlen(words[i]) + 1;
 			wordscopy = malloc(wordsl * sizeof(char));
+			// reika free(array);
 			strcpy(wordscopy, words[i]);
 
-			casefold(words[i], realcasef);
+			casefold(words[i]);
 
 			asl = realstrlen(words[i]);
 			
@@ -423,6 +439,7 @@ int main (int argc, unsigned char *argv[])
 				printsimbol(asl.allstrlen, wordlen);
 			}
 			notfound += wc;
+
 		}
 		
 		if(!notfound)
