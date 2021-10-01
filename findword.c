@@ -85,7 +85,7 @@ struct StrLen
 	int realstrlen;
 };
 
-struct StrLen realstrlen(unsigned char *str)
+struct StrLen strleninfo(unsigned char *str)
 {	
 	struct StrLen astrl = {0};
 	
@@ -103,19 +103,11 @@ struct StrLen realstrlen(unsigned char *str)
 	return astrl;
 }
 
-void printsimbol(int number, int wordl)
+void printunder(int alllen)
 {
-	unsigned char *begin = "Found word ";
-	int lbegin = strlen(begin);
-	
-	unsigned char *end = " in: ";
-	int lend = strlen(end);
-	
-	int alllength = lbegin + (wordl + 2) + lend + (number + 2);
-	
-	for (int i = 0; i < (alllength + 1); i++)
+	for (int i = 0; i < (alllen + 1); i++)
 	{
-		if(i != (alllength))
+		if(i != (alllen))
 		{
 			printf("-");
 		}
@@ -126,7 +118,39 @@ void printsimbol(int number, int wordl)
 	}
 }
 
-int compares(unsigned char *str, unsigned char *copystr, unsigned char *findword, unsigned char *findwordcopy, unsigned char *op, int wl, int sl)
+void iffoundword(int allstrlen, int wordl, int wordcount, unsigned char *wordcopy, unsigned char *strcopy, int notfound)
+{
+	if(wordcount > 0)
+	{
+		unsigned char *begin = "Found word ";
+		int lbegin = strlen(begin);
+
+		unsigned char *end = " in: ";
+		int lend = strlen(end);
+		
+		int alllength = lbegin + (wordl + 2) + lend + (allstrlen + 2);
+
+		for (int i = 0; i < wordcount; i++)
+		{
+			printf("%s\"%s\"%s\"%s\"\n", begin, wordcopy, end, strcopy);
+			printunder(alllength);
+		}
+	}
+	else
+	{
+		if(!notfound)
+		{
+			unsigned char *nfw = "Not found word";
+			int nfwlen = strlen(nfw);
+			int alllength = nfwlen + wordl + 2 + 1;
+			printf("%s \"%s\"\n", nfw, wordcopy);
+			printunder(alllength);
+		}
+	}
+
+}
+
+int compares(unsigned char *str, unsigned char *findword, unsigned char *op, int wl, int sl)
 {	
 	int samelet = 0;
 	int strn = 0;
@@ -181,14 +205,6 @@ int compares(unsigned char *str, unsigned char *copystr, unsigned char *findword
 		str++;
 	}
 	
-	if(wce != 0)
-	{
-		for (int i = 0; i < wce; i++)
-		{
-			printf("Found word \"%s\" in: \"%s\"\n", findwordcopy, copystr);
-		}
-	}
-	
 	return wce;
 }
 
@@ -204,11 +220,14 @@ void loadcaseffile(void)
 	unsigned char prefix[]= "0x";
 	unsigned int arrsize = 0;
 	
+	unsigned long *newlup = NULL;
+	unsigned long *newllow = NULL;
 	while(casefolding[casef])
 	{
 		unsigned long casehex;
 		unsigned char casechar1 = casefolding[casef][6];
 		unsigned char casechar2 = casefolding[casef][7];
+		
 		if((casechar1 == 'F') || (casechar2 == 'F') || (casechar1 == 'S') || (casechar2 == 'S') || (casechar1 == 'T') || (casechar2 == 'T'))
 		{
 			// printf("Nepalaikomas simbolis\n");
@@ -219,11 +238,12 @@ void loadcaseffile(void)
 			char lowhexstr[8];
 			long hexnub;
 			
+			
 			if(realcasef == arrsize)
 			{
 				arrsize += STEPSIZE;
-				unsigned long *newlup = realloc(Upletter, arrsize * sizeof(unsigned long));
-				unsigned long *newllow = realloc(Lowletter, arrsize * sizeof(unsigned long));
+				newlup = realloc(Upletter, arrsize * sizeof(unsigned long));
+				newllow = realloc(Lowletter, arrsize * sizeof(unsigned long));
 				
 				if(!newlup || !newllow)
 				{
@@ -231,10 +251,8 @@ void loadcaseffile(void)
 					exit(1);
 				}
 				Upletter = newlup;
-				Lowletter = newllow;
-				
+				Lowletter = newllow;				
 			}
-		
 			for (int j = 0; prefix[j] != '\0'; j++)
 			{
 				uphexstr[j] = prefix[j];
@@ -267,6 +285,8 @@ void loadcaseffile(void)
 		}
 		casef++;
 	}
+	free(newlup);
+	free(newllow);
 }
 
 void casefold(unsigned char *cfstr)
@@ -359,6 +379,8 @@ int main (int argc, unsigned char *argv[])
 		exit(1);
 	}
 	
+	loadcaseffile();
+	
 	unsigned char *filename = argv[1];
 	int filenize = strlen(filename) - 1;
 	
@@ -371,7 +393,6 @@ int main (int argc, unsigned char *argv[])
 		wordlen++;
 		if(wordlen == 1 || (wordlen % 2 == 0))
 		{
-			// printf("wordlen %d = %d\n", wordlen, (wordlen + 2));
 			wordcopy = realloc(wordcopy, (i + 2) * sizeof(unsigned char));
 		}
 		wordcopy[i] = word[i];	
@@ -380,7 +401,6 @@ int main (int argc, unsigned char *argv[])
 			wordcopy[wordlen] = '\0';
 		}
 	}
-	loadcaseffile();
 
 	casefold(word);
 
@@ -416,57 +436,44 @@ int main (int argc, unsigned char *argv[])
 		}
 		
 		int notfound = 0;
-		
+		struct StrLen asl;
+		int wc = 0;
+
+		unsigned char *wordscopy;
+		int nf = 1;
+
 		for (int i = 0; words[i] != NULL; i++)
 		{
 			int lnb = 0;
 			int spnb = 0;
-			int wc = 0;
-			struct StrLen asl;
-			unsigned char *wordscopy;
 			int wordsl = strlen(words[i]) + 1;
 			wordscopy = malloc(wordsl * sizeof(char));
-			// reika free(array);
 			strcpy(wordscopy, words[i]);
 
 			casefold(words[i]);
 
-			asl = realstrlen(words[i]);
+			asl = strleninfo(words[i]);
 			
-			wc = compares(words[i], wordscopy, word, wordcopy, op, wordlen, asl.realstrlen);
-			if(wc)
-			{
-				printsimbol(asl.allstrlen, wordlen);
-			}
+			wc = compares(words[i], word, op, wordlen, asl.realstrlen);
+			iffoundword(asl.allstrlen, wordlen, wc, wordcopy, wordscopy, nf);
 			notfound += wc;
 
 		}
 		
 		if(!notfound)
 		{
-			unsigned char *nfw = "Not found word";
-			int nfwlen = strlen(nfw);
-			int alnfwlen = nfwlen + wordlen + 2 + 1;
-			printf("%s \"%s\"\n", nfw, wordcopy);
-			
-			for (int i = 0; i < (alnfwlen + 1); i++)
+			nf = 0;
+			if(!nf)
 			{
-				if(i != alnfwlen)
-				{
-					printf("-");
-				}
-				else
-				{
-					printf("\n");
-				}
+				iffoundword(asl.allstrlen, wordlen, wc, wordcopy, wordscopy, nf);
 			}
 		}
+		free(wordscopy);
 	}
 	else
 	{
 		printf("No, no, no, blogas failas\n");
 	}
-
 	printf("Baigta");
 	return 0;
 }
