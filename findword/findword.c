@@ -520,7 +520,6 @@ int main (int argc, unsigned char *argv[])
 				printf("Dabar galite nurodyti failo pavadinimą (jei tame pačiame aplanke (folder'yje))\n");
 				printf("arba failo vietą pvz.: C:\\Users\\Admin\\Desktop\\failas.txt\n");
 				printf("(galite, laikydami ant failo, užtempti ant command prompt):\n");
-				printf("(galite, laikydami ant failo, užtempti ant command prompt, kol kas veikia tik x86):\n");
 
 				// panašu, kad dėl bug'o? neina su scanf priimti UTF8 ženklų, kaip lietuviškos raidės, todėl
 				// padaryta pagal:
