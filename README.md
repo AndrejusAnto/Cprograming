@@ -1,6 +1,6 @@
 Visokie C programavimo kalbos (užduočių) sprendimai:
 
-findword.c ieško žodžio txt faile ir jei randama, atspausdina eilutę/žodį, pritaikyti ieškant ir lietuviškus žodžius. Galima pasirnkti ar tiksliai atitiktų žodį ar būtų kito žodio dalis. Galima arba compile'iuotis ant windows 10 per command prompt: cl findword.c arba per tą patį command prompt pasileisti findword.exe (nors teoriškai šito nereiktų daryti ;)).
+findword.c ieško žodžio txt faile ir jei randama, atspausdina eilutę/žodį, pritaikyti ieškant ir lietuviškus žodžius. Galima pasirnkti ar tiksliai atitiktų žodį ar būtų kito žodio dalis. Galima arba compile'iuotis ant windows 10 per command prompt: cl findword.c arba per tą patį command prompt pasileisti findword.exe (nors teoriškai šito nereiktų daryti :wink:).
 
 ![Alt Text](https://github.com/AndrejusAnto/Cprograming/blob/master/newfindword.gif)
 
