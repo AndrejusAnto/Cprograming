@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <errno.h>
 // import'uojas failas, kuris turi funkciją, kuri patikrina ar ženklas yra tam tikras simbolis
 #include "ifsimbol.h"
 
@@ -34,7 +35,7 @@ unsigned char **loadfile(unsigned char *filename)
 	// patikrinam ar failas buvo atidarytas, jei ne atitinkamos info atvaizdavimas
 	if(!f)
 	{
-		printf("Cant open %s \n", filename);
+		printf("Cant open %s : %s\n", filename, strerror(errno));
 		exit(1);
 		// return NULL;
 	}
@@ -503,17 +504,22 @@ int main (int argc, unsigned char *argv[])
 
 	if (argc < 4)
 	{
+		unsigned char fileok = 0;
+		unsigned char iftxt = 0;
+		int tfsize = 0;
+		const unsigned char *msg = "Negerai, patikrinkit ar teisingai nurodėte failo pavadinimą su .txt galūne\n";
+		const unsigned char *txt = ".txt";
+
+		wchar_t wfname[MAX_FILE_PATH];
+		wchar_t wword[MAX_WORD_LENGTH];
+		unsigned char tfname[MAX_FILE_PATH];
+
+		unsigned long read;
+		void *con = GetStdHandle(STD_INPUT_HANDLE);
+		int size;
+		
 		if(argc != 3)
-		{
-			wchar_t wfname[MAX_FILE_PATH];
-			wchar_t wword[MAX_WORD_LENGTH];
-	
-			unsigned long read;
-			void *con = GetStdHandle(STD_INPUT_HANDLE);
-			int size;
-			unsigned char fileok = 0;
-			unsigned char *msg = "Negerai, patikrinkit ar teisingai nurodėte failo pavadinimą su .txt galūne\n";
-			
+		{	
 			if(argc == 1)
 			{
 				printf("Galima ir taip: findword.exe (C:\\Users\\Admin\\Desktop\\)failas.txt ieškomasžodis\n");
@@ -527,104 +533,121 @@ int main (int argc, unsigned char *argv[])
 				// SetConsoleOutputCP(CP_UTF8);
 				// SetConsoleCP(CP_UTF8);
 				
-				while(!fileok)
+				
+				ReadConsoleW(con, wfname, MAX_FILE_PATH, &read, NULL);
+				size = WideCharToMultiByte(CP_UTF8, 0, wfname, read, filename, sizeof(filename), NULL, NULL);
+				filename[size-2] = '\0';
+				fsize = strlen(filename);
+				endidx = fsize - 1;
+				iftxt = ((filename[endidx-3] == '.') &&
+						  (filename[endidx-2] == 't') && 
+						  (filename[endidx-1] == 'x') && 
+						  (filename[endidx] == 't')
+						  ) ? 1 : 0;
+
+				if(iftxt)
 				{
-					ReadConsoleW(con, wfname, MAX_FILE_PATH, &read, NULL);
-					size = WideCharToMultiByte(CP_UTF8, 0, wfname, read, filename, sizeof(filename), NULL, NULL);
-					filename[size-2] = '\0';
-					fsize = strlen(filename);
-					endidx = fsize - 1;
-					
-					if(fsize >= 5)
+					if(fsize == 4)
 					{
-						int ifdot = 0;
-						// for (int i = 0; i < fsize; i++)
-						for (int i = 0; ((filename[i] != '\0') && (filename[i+1] != '.')); i++)
+						printf("Suveskite failo pavadinimą/vietą be .txt: ");
+						ReadConsoleW(con, wfname, MAX_FILE_PATH, &read, NULL);
+						size = WideCharToMultiByte(CP_UTF8, 0, wfname, read, tfname, sizeof(tfname), NULL, NULL);
+						tfname[size-2] = '\0';
+						tfsize = strlen(tfname);
+
+						for (int i = 0; txt[i] != '\0'; i++)
 						{
-							ifdot = i;
-							// if(filename[i] == '.')
-							// {
-							// 	ifdot = 1;
-							// }
+							filename[i+tfsize] = txt[i];
 						}
 
-						// if(ifdot)
-						if(ifdot != endidx)
+						for (int i = 0; tfname[i] != '\0'; i++)
 						{
-							fileok = ((filename[endidx-2] == 't') && 
-									  (filename[endidx-1] == 'x') && 
-									  (filename[endidx] == 't')
-								  	   ) ? 1 : 0;
+							filename[i] = tfname[i];
+						}
 
-							if(!fileok)
-							{
-								// "Negerai, patikrinkit ar teisingai nurodėte failo pavadinimą su .txt galūne\n"
-								printf("%s", msg);
-							}
-						}
-						else
-						{
-							// "Negerai, patikrinkit ar teisingai nurodėte failo pavadinimą su .txt galūne\n")
-							printf("%s", msg);
-						}
-					}
-					else
-					{
-						printf("Neteisingas failas, turi būti bent viena raidė pavadinime su .txt galūne\n");
+						filename[fsize+tfsize] = '\0';
 					}
 				}
+				else
+				{
+					int sk = 0;			
+					int ifdot = 0;
+
+					for (int i = 0; i < fsize; i++)
+					{
+						if(filename[i] == '.')
+						{
+							ifdot = i;
+						}
+					}
+					
+					if(ifdot != 0)
+					{
+						sk = fsize - ifdot;
+					}
+					
+					txt = txt + sk;
+					printf("Pamiršot \"%s\", nieko tokio, automatikšai pridėta \"%s\"\n", txt, txt);
+					for (int i = 0; txt[i] != '\0'; i++)
+					{
+						filename[i+fsize] = txt[i];
+					}
+					filename[fsize+(4-sk)] = '\0';
+				}
+				// printf("filename %s\n", filename);
 				words = loadfile(filename);
 				
-				printf("ir ieškomą žodį:\n");
+				printf("Ieškomas žodis:\n");
 				ReadConsoleW(con, wword, MAX_WORD_LENGTH, &read, NULL);
 				size = WideCharToMultiByte(CP_UTF8, 0, wword, read, word, sizeof(word), NULL, NULL);
 				word[size-2] = '\0';
-						words = loadfile(filename);
 			}
 			else
 			{
+				// if argc 2
 				fsize = strlen(argv[1]);
 				endidx = fsize - 1;
 
-				int ifdot = -2;
-				int iffile = 0;
-				for (int i = 0; i != (ifdot + 1); i++)
+				int ifdot = 0;
+				unsigned char tstep = 0;
+				while(1)
 				{
-					if(i == endidx)
+					if(argv[1][tstep] != '\0')
 					{
-						ifdot = 0;
-						goto jump;
+						if((argv[1][tstep] == '.'))
+						{
+							ifdot = tstep;
+							break;
+						}
 					}
 					else
 					{
-						if(argv[1][i] == '.')
-						{
-							ifdot = i;
-						}
+						break;
 					}
+					tstep++;
 				}
-				jump:
+
 				if(ifdot != 0)
 				{
-					int sk = endidx - ifdot;
-					fileok = ((argv[1][endidx-2] == 't') && 
-							  (argv[1][endidx-1] == 'x') && 
-							  (argv[1][endidx] == 't')
-						  	   ) ? 1 : 0;
+					unsigned char tempop;
+					unsigned char ifop = 1;
 					
-					if((sk == 3) && (fileok))
-					{
-						tempfn = argv[1];
-						int i = 0;
-						while(*tempfn)
-						{
-							filename[i] = *tempfn;
-							tempfn++;
-							i++;
-						}
-						filename[i] = '\0';
-						words = loadfile(filename);
+					fileok = ((argv[1][ifdot+1] == 't') && 
+							  (argv[1][ifdot+2] == 'x') && 
+							  (argv[1][ifdot+3] == 't')
+						  	  ) ? 1 : 0;
 
+					if(fileok)
+					{
+						int j = 0;
+						while(*argv[1])
+						{
+							filename[j] = *argv[1];
+							*argv[1]++;
+							j++;
+						}
+						filename[j] = '\0';
+						words = loadfile(filename);
 						printf("Reikia ieškomo žodžio:\n");		
 						
 						// wchar_t wfname[MAX_FILE_PATH];
@@ -633,40 +656,153 @@ int main (int argc, unsigned char *argv[])
 						ReadConsoleW(con, wword, MAX_FILE_PATH, &read, NULL);
 						int size = WideCharToMultiByte(CP_UTF8, 0, wword, read, word, sizeof(word), NULL, NULL);
 						word[size-2] = '\0';
-
 					}
 					else
 					{
-						while(!fileok)
+						printf("Suvedėt \"%s\", ar norėjote suvesti failą/jo vietą?\n", argv[1]);
+						printf("Suveskite \"t\" (kaip \"taip\") arba \"n\" (kaip \"ne\"): ");
+						while(ifop)
 						{
-							printf("Negerai, patikrinkit ar teisingai nurodėte failo pavadinimą su .txt galūne\n");
-							ReadConsoleW(con, wfname, MAX_FILE_PATH, &read, NULL);
-							int size = WideCharToMultiByte(CP_UTF8, 0, wfname, read, filename, sizeof(filename), NULL, NULL);
-							filename[size-2] = '\0';
-							fsize = strlen(filename);
-							endidx = fsize - 1;
-							fileok = ((filename[endidx-2] == 't') && 
-							  		  (filename[endidx-1] == 'x') && 
-									  (filename[endidx] == 't')
-						  			  ) ? 1 : 0;
+							// " %c", tarpas čia, nes naudojant scanf taip galima pašalinti atmintyje likusį new line simbolį
+							scanf(" %c", &tempop);
+							ifop = ((tempop == 't') || (tempop == 'n')) ? 0 : 1;
+							if(ifop)
+							{
+								printf("Negerai, turi būti \"t\" arba \"n\": \n");
+							}
+						}
+
+						if(tempop == 't')
+						{
+							int sk = fsize - ifdot;
+							if(sk > 3)
+							{
+								sk = 0;
+							}
+
+							fileok = ((argv[1][ifdot+1] == 't') && 
+								  	  (argv[1][ifdot+2] == 'x') && 
+								  	  (argv[1][ifdot+3] == 't')
+							  	      ) ? 1 : 0;
 							
 							if(fileok)
 							{
-								// galima ankščiau break'inti while loop'ą, kad neinu iš naujo per while(!fileok) 
-								break;
+								int j = 0;
+								while(*argv[1])
+								{
+									filename[j] = *argv[1];
+									*argv[1]++;
+									j++;
+								}
+
+								filename[ifdot+4] = '\0';
+								// printf("Failas %s\n", filename);
+							}
+							
+							txt = (txt+sk);
+							
+							printf("Aišku, automatiškai suvesta \"%s\".\n", txt);
+							
+							int j = 0;
+							while(*argv[1])
+							{
+								filename[j] = *argv[1];
+								*argv[1]++;
+								j++;
+							}
+							for (int i = 0; txt[i] != '\0'; i++)
+							{
+								filename[fsize+i] = txt[i];
+
+							}
+							
+							filename[fsize + (4 - sk)] = '\0';
+							printf("Reikia ieškomo žodžio:\n");		
+					
+							// wchar_t wfname[MAX_FILE_PATH];
+							// unsigned long read;
+							// void *con = GetStdHandle(STD_INPUT_HANDLE);	
+							ReadConsoleW(con, wword, MAX_FILE_PATH, &read, NULL);
+							int size = WideCharToMultiByte(CP_UTF8, 0, wword, read, word, sizeof(word), NULL, NULL);
+							word[size-2] = '\0';
+						}
+						else
+						{
+							// if n
+							ifdot = 0;
+							int j = 0;
+							while(*argv[1] != '.')
+							{
+								word[j] = *argv[1];
+								*argv[1]++;
+								j++;
+							}
+							word[fsize-1] = '\0';
+							
+							printf("Reikia failo pavadinimo/vietos (galite, laikydami ant failo, užtempti ant command prompt):\n");
+							ReadConsoleW(con, wfname, MAX_FILE_PATH, &read, NULL);
+							size = WideCharToMultiByte(CP_UTF8, 0, wfname, read, filename, sizeof(filename), NULL, NULL);
+							filename[size-2] = '\0';
+							fsize = strlen(filename);
+							endidx = fsize - 1;
+							
+							for (int i = 0; filename[i] != '\0'; i++)
+							{
+
+								if(filename[i] == '.')
+								{
+									ifdot = i;
+								}
+							}
+							
+							fileok = ((filename[endidx-2] == 't') && 
+									  (filename[endidx-1] == 'x') && 
+									  (filename[endidx] == 't')
+									  ) ? 1 : 0;
+
+							
+							while(!(ifdot && fileok))
+							{
+								int sk = fsize - ifdot;
+								if(ifdot == 0)
+								{
+									sk = 0;
+								}
+								printf("Pamiršot \"%s\", suveskite \"%s\":\n", (txt+sk), (txt+sk));
+								ReadConsoleW(con, wfname, MAX_FILE_PATH, &read, NULL);
+								size = WideCharToMultiByte(CP_UTF8, 0, wfname, read, tfname, sizeof(tfname), NULL, NULL);
+								tfname[size-2] = '\0';
+								tfsize = strlen(tfname);
+								for (int i = 0; tfname[i] != '\0'; i++)
+								{
+									filename[fsize+i] = tfname[i];
+
+								}
+								filename[fsize+tfsize] = '\0';
+								fsize = strlen(filename);
+
+								endidx = fsize - 1;
+								for (int i = 0; filename[i] != '\0'; i++)
+								{
+
+									if(filename[i] == '.')
+									{
+										ifdot = i;
+									}
+								}
+								fileok = ((filename[endidx-2] == 't') && 
+									  	  (filename[endidx-1] == 'x') && 
+										  (filename[endidx] == 't')
+										  ) ? 1 : 0;
 							}
 						}
 						words = loadfile(filename);
-						printf("Reikia ieškomo žodžio:\n");
-						ReadConsoleW(con, wword, MAX_FILE_PATH, &read, NULL);
-						int size = WideCharToMultiByte(CP_UTF8, 0, wword, read, word, sizeof(word), NULL, NULL);
-						word[size-2] = '\0';
 					}
-					
 				}
 				else
 				{
 					tempfn = argv[1];
+					int ifdot = 0;
 					int i = 0;
 					while(*tempfn)
 					{
@@ -675,47 +811,142 @@ int main (int argc, unsigned char *argv[])
 						i++;
 					}
 					word[i] = '\0';
-
-					printf("Reikia failo pavadinimo/vietos (galite, laikydami ant failo, užtempti ant command prompt):\n");		
 					
+					printf("Reikia failo pavadinimo/vietos (galite, laikydami ant failo, užtempti ant command prompt):\n");
 					// wchar_t wfname[MAX_FILE_PATH];
 					// unsigned long read;
-					// void *con = GetStdHandle(STD_INPUT_HANDLE);	
+					// void *con = GetStdHandle(STD_INPUT_HANDLE);
 					ReadConsoleW(con, wfname, MAX_FILE_PATH, &read, NULL);
 					int size = WideCharToMultiByte(CP_UTF8, 0, wfname, read, filename, sizeof(filename), NULL, NULL);
 					filename[size-2] = '\0';
-					// fsize = strlen(filename);
-					// endidx = fsize - 1;
+					fsize = strlen(filename);
+					endidx = fsize - 1;
+					
+					for (int i = 0; filename[i] != '\0'; i++)
+					{
+
+						if(filename[i] == '.')
+						{
+							ifdot = i;
+						}
+					}
+
+					fileok = ((filename[endidx-2] == 't') && 
+							  (filename[endidx-1] == 'x') && 
+							  (filename[endidx] == 't')
+							  ) ? 1 : 0;
+					
+					while(!(ifdot && fileok))
+					{
+						int sk = fsize - ifdot;
+						if(ifdot == 0)
+						{
+							sk = 0;
+						}
+						printf("Pamiršot \"%s\", suveskite \"%s\":\n", (txt+sk), (txt+sk));
+						ReadConsoleW(con, wfname, MAX_FILE_PATH, &read, NULL);
+						size = WideCharToMultiByte(CP_UTF8, 0, wfname, read, tfname, sizeof(tfname), NULL, NULL);
+						tfname[size-2] = '\0';
+						tfsize = strlen(tfname);
+						for (int i = 0; tfname[i] != '\0'; i++)
+						{
+							filename[fsize+i] = tfname[i];
+
+						}
+						filename[fsize+tfsize] = '\0';
+						fsize = strlen(filename);
+
+						endidx = fsize - 1;
+						for (int i = 0; filename[i] != '\0'; i++)
+						{
+
+							if(filename[i] == '.')
+							{
+								ifdot = i;
+							}
+						}
+						fileok = ((filename[endidx-2] == 't') && 
+							  	  (filename[endidx-1] == 'x') && 
+								  (filename[endidx] == 't')
+								  ) ? 1 : 0;
+
+					}
 					words = loadfile(filename);
 				}
+				// galbut skenuoti direktorija ir rodyti, kad tokio failo nera
+				 // negerai dėl kabučių atprintinant papildomi ----
+				// Found word "lietuviškai" in: "„Rašyk lietuviškai!“"
+				// -------------------------------------------------------
 			}
 		}
 		else
 		{
-			// negerai dėl didžiųjų raidžių, panašu, kad kažkoks bug'as
 			// šitas printf leidžia words = loadfile(filename) šitam "else",
 			// o ne išėjus pagrindinio if else
-			// printf("");
+			int ifdot = 0;
+			printf("");
 			fsize = strlen(argv[2]);
-			int j = 0;
+			int wstep = 0;
 			while(*argv[2])
 			{
-				word[j] = *argv[2];
+				word[wstep] = *argv[2];
 				argv[2]++;
-				j++;
+				wstep++;
 			}
 
 			word[fsize] = '\0';
 	
 			fsize = strlen(argv[1]);
-			int i = 0;
+			int fstep = 0;
 			while(*argv[1])
 			{
-				filename[i] = *argv[1];
+				filename[fstep] = *argv[1];
 				argv[1]++;
-				i++;
+				fstep++;
 			}
 			filename[fsize] = '\0';
+			
+			while(!(ifdot && fileok))
+			{
+				for (int i = 0; filename[i] != '\0'; i++)
+				{
+					if(filename[i] == '.')
+					{
+						ifdot = i;
+					}
+				}
+				endidx = fsize - 1;
+				fileok = ((filename[endidx-2] == 't') && 
+					  	  (filename[endidx-1] == 'x') && 
+						  (filename[endidx] == 't')
+						  ) ? 1 : 0;
+
+				if((ifdot && fileok))
+				{
+					break;
+				}
+				
+				int sk = fsize - ifdot;				
+				if(ifdot == 0)
+				{
+					sk = 0;
+				}
+
+				printf("Pamiršot \"%s\", suveskite \"%s\":\n", (txt+sk), (txt+sk));
+				ReadConsoleW(con, wfname, MAX_FILE_PATH, &read, NULL);
+				size = WideCharToMultiByte(CP_UTF8, 0, wfname, read, tfname, sizeof(tfname), NULL, NULL);
+				tfname[size-2] = '\0';
+				tfsize = strlen(tfname);
+				for (int i = 0; tfname[i] != '\0'; i++)
+				{
+					if(tfname[i] == *(txt+sk+i))
+					{
+						filename[fsize+i] = tfname[i];
+					}
+				}
+				filename[fsize+tfsize] = '\0';
+				fsize = strlen(filename);
+			}
 			words = loadfile(filename);
 			
 		}
