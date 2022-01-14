@@ -2,7 +2,7 @@ Visokie C programavimo kalbos (užduočių) sprendimai:
 
 findword.c ieško žodžio txt faile ir jei randama, atspausdina eilutę/žodį, pritaikyti ieškoti ir lietuviškus žodžius. Galima pasirnkti ar tiksliai atitiktų žodį ar būtų kito žodio dalis.
 
-![Alt Text](https://github.com/AndrejusAnto/Cprograming/blob/master/findword.gif)
+![Alt Text](https://github.com/AndrejusAnto/Cprograming/blob/master/newfindword.gif)
 
 pagal sdlrect.c padaryta tas pats naudojant sdl point api (sdlpoint.c)   
 
